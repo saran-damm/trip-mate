@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import Layout from "../components/layout/Layout";
 import Splash from "../pages/Splash/Splash";
@@ -32,7 +32,7 @@ const LayoutWrapper = () => {
 
 export default function AppRoutes() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         {/* Public routes without Layout */}
         <Route path="/" element={<PageTransition transitionType="slide-up"><Splash /></PageTransition>} />
@@ -58,6 +58,6 @@ export default function AppRoutes() {
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
