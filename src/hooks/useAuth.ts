@@ -1,44 +1,25 @@
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useAPI } from './useAPI';
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  profile_image?: File;
-}
+import { 
+  registerUser, 
+  loginUser, 
+  logoutUser, 
+  resetPassword as resetPasswordFirebase,
+  type LoginCredentials,
+  type RegisterData
+} from '../firebase/auth';
 
 export function useAuth() {
   const { user, setUser, token, setToken, isAuthenticated, setIsAuthenticated, loading } = useContext(AuthContext);
-  const api = useAPI();
 
   // Register a new user
   const register = async (userData: RegisterData) => {
     try {
-      // Create FormData for multipart/form-data request (for file upload)
-      const formData = new FormData();
-      formData.append('name', userData.name);
-      formData.append('email', userData.email);
-      formData.append('password', userData.password);
+      const response = await registerUser(userData);
       
-      if (userData.profile_image) {
-        formData.append('profile_image', userData.profile_image);
-      }
-
-      const response = await api.execute('/api/auth/register', {
-        method: 'POST',
-        body: formData,
-      });
-
       if (response && response.user) {
         setUser(response.user);
-        // If the backend returns a token, store it
+        // Store token
         if (response.token) {
           localStorage.setItem('auth_token', response.token);
           setToken(response.token);
@@ -56,14 +37,11 @@ export function useAuth() {
   // Login user
   const login = async (credentials: LoginCredentials) => {
     try {
-      const response = await api.execute('/api/auth/login', {
-        method: 'POST',
-        body: credentials,
-      });
+      const response = await loginUser(credentials);
 
       if (response && response.user) {
         setUser(response.user);
-        // If the backend returns a token, store it
+        // Store token
         if (response.token) {
           localStorage.setItem('auth_token', response.token);
           setToken(response.token);
@@ -81,6 +59,8 @@ export function useAuth() {
   // Logout user
   const logout = async () => {
     try {
+      await logoutUser();
+      
       // Clear user data and token from state
       setUser(null);
       setToken(null);
@@ -99,29 +79,10 @@ export function useAuth() {
   // Reset password
   const resetPassword = async (email: string) => {
     try {
-      const response = await api.execute('/api/auth/reset-password', {
-        method: 'POST',
-        body: { email },
-      });
-
+      const response = await resetPasswordFirebase(email);
       return response;
     } catch (error) {
       console.error('Password reset error:', error);
-      throw error;
-    }
-  };
-
-  // Validate token
-  const validateToken = async (token: string) => {
-    try {
-      const response = await api.execute('/api/auth/validate-token', {
-        method: 'POST',
-        body: { token },
-      });
-
-      return response;
-    } catch (error) {
-      console.error('Token validation error:', error);
       throw error;
     }
   };
@@ -135,6 +96,5 @@ export function useAuth() {
     login,
     logout,
     resetPassword,
-    validateToken,
   };
 }

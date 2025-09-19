@@ -3,18 +3,29 @@ import { useNavigate } from "react-router-dom";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Icon from "../../components/common/IconProvider";
+import { useTrip } from "../../context/TripContext";
+import parisImg from '../../assets/images/paris.jpeg';
+import baliImg from '../../assets/images/bali.jpeg';
+import jaipurImg from '../../assets/images/jaipur.jpeg';
+import tokyoImg from '../../assets/images/tokyo.jpeg';
 
 const destinations = [
-  { name: "Paris", cost: "₹85,000", img: "https://source.unsplash.com/400x300/?paris" },
-  { name: "Bali", cost: "₹55,000", img: "https://source.unsplash.com/400x300/?bali" },
-  { name: "Jaipur", cost: "₹25,000", img: "https://source.unsplash.com/400x300/?jaipur" },
-  { name: "Tokyo", cost: "₹95,000", img: "https://source.unsplash.com/400x300/?tokyo" },
+  { name: "Paris", country: "France", cost: "₹85,000", img: parisImg },
+  { name: "Bali", country: "Indonesia", cost: "₹55,000", img: baliImg },
+  { name: "Jaipur", country: "India", cost: "₹25,000", img: jaipurImg },
+  { name: "Tokyo", country: "Japan", cost: "₹95,000", img: tokyoImg },
 ];
 
 export default function DestinationSuggest() {
   const [search, setSearch] = useState("");
   const [mapView, setMapView] = useState(false);
   const navigate = useNavigate();
+  const { updateTripPlan } = useTrip();
+
+  const handleSelect = (destination: { name: string; country: string }) => {
+    updateTripPlan({ destination: destination.name, country: destination.country });
+    navigate("/itinerary");
+  };
 
   const filtered = destinations.filter((d) =>
     d.name.toLowerCase().includes(search.toLowerCase())
@@ -54,7 +65,7 @@ export default function DestinationSuggest() {
                 <p className="text-neutral">From {dest.cost}</p>
                 <Button
                   label="Select"
-                  onClick={() => navigate("/itinerary")}
+                  onClick={() => handleSelect(dest)}
                   variant="primary"
                 />
               </div>

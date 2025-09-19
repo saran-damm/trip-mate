@@ -1,19 +1,23 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import Icon from "../../components/common/IconProvider";
+import { useTrendingDestinations } from "../../hooks/useTrendingDestinations";
+import type { TrendingDestination } from "../../types/destination";
+import { AuthContext } from "../../context/AuthContext";
 
 // Lazy load components
 const ToastDemo = lazy(() => import('../../components/demo/ToastDemo'));
 const LoadingDemo = lazy(() => import('../../components/demo/LoadingDemo'));
 
-const trendingDestinations = [
-  { name: "Paris", country: "France", price: 75000, image: "paris", flag: "FR" },
-  { name: "Bali", country: "Indonesia", price: 45000, image: "bali", flag: "ID" },
-  { name: "Jaipur", country: "India", price: 25000, image: "jaipur", flag: "IN" },
-  { name: "New York", country: "USA", price: 95000, image: "new-york", flag: "US" },
-  { name: "Tokyo", country: "Japan", price: 85000, image: "tokyo", flag: "JP" },
+// Fallback trending destinations in case API fails
+const fallbackDestinations = [
+  { id: "fallback_1", name: "Paris", country: "France", price: 75000, imageUrl: "paris", flag: "FR", rating: 4.9, reviewCount: 15000 },
+  { id: "fallback_2", name: "Bali", country: "Indonesia", price: 45000, imageUrl: "bali", flag: "ID", rating: 4.8, reviewCount: 12000 },
+  { id: "fallback_3", name: "Jaipur", country: "India", price: 25000, imageUrl: "jaipur", flag: "IN", rating: 4.7, reviewCount: 8000 },
+  { id: "fallback_4", name: "New York", country: "USA", price: 95000, imageUrl: "new-york", flag: "US", rating: 4.8, reviewCount: 14000 },
+  { id: "fallback_5", name: "Tokyo", country: "Japan", price: 85000, imageUrl: "tokyo", flag: "JP", rating: 4.9, reviewCount: 16000 },
 ];
 
 const categories = [
@@ -25,6 +29,11 @@ const categories = [
 
 export default function Home() {
   const navigate = useNavigate();
+  const { destinations, isLoading, error } = useTrendingDestinations();
+  const { user } = useContext(AuthContext);
+  
+  // Use API data if available, otherwise use fallback
+  const displayDestinations = destinations.length > 0 ? destinations : fallbackDestinations;
 
   return (
     <div className="space-y-10">
@@ -32,7 +41,7 @@ export default function Home() {
       <section className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-card p-8 slide-up">
         <div className="max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            <span className="text-primary">Hello, Uday</span> <Icon icon={"hand-peace" as const} className="inline-block ml-1" />
+            <span className="text-primary">Hello, {user?.name || 'Explorer'}</span> <Icon icon={"hand-peace" as const} className="inline-block ml-1" />
             <span className="block mt-2">Ready to plan your next adventure?</span>
           </h1>
           <p className="text-neutral text-lg mb-6">
@@ -104,52 +113,78 @@ export default function Home() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trendingDestinations.map((place, index) => (
-            <Card 
-              key={place.name} 
-              padding="none" 
-              hoverable 
-              className={`overflow-hidden ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''} slide-up`}
-            >
-              <div className="relative">
-                <img
-                  src={`https://source.unsplash.com/600x400/?${place.image},travel,landmark`}
-                  alt={place.name}
-                  className="h-48 w-full object-cover"
-                />
-                <div className="absolute top-3 right-3 bg-accent text-dark px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                  <span className="font-bold">{place.flag}</span> {place.country}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, index) => (
+              <Card key={index} padding="none" className="overflow-hidden animate-pulse">
+                <div className="h-48 bg-neutral-200 dark:bg-neutral-700"></div>
+                <div className="p-4 space-y-4">
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4"></div>
+                  <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2"></div>
+                  <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded w-full"></div>
                 </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg">{place.name}</h3>
-                <div className="flex justify-between items-center mt-2">
-                  <div>
-                    <div className="flex items-center text-sm text-neutral">
-                      <span className="text-yellow-500 flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Icon key={i} icon={"star" as const} className="text-yellow-500" />
-                        ))}
-                      </span>
-                      <span className="ml-1">5.0</span>
-                      <span className="ml-2">(120 reviews)</span>
-                    </div>
+              </Card>
+            ))}
+          </div>
+        ) : error ? (
+          <Card variant="error" className="p-4">
+            <div className="flex items-center gap-2">
+              <Icon icon={"warning" as const} className="text-error" />
+              <p>Failed to load trending destinations. Please try again later.</p>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayDestinations.slice(0, 6).map((place: TrendingDestination, index) => (
+              <Card 
+                key={place.id} 
+                padding="none" 
+                hoverable 
+                className={`overflow-hidden ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''} slide-up`}
+              >
+                <div className="relative">
+                  <img
+                    src={place.imageUrl || `https://source.unsplash.com/600x400/?${place.name},travel,landmark`}
+                    alt={place.name}
+                    className="h-48 w-full object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-accent text-dark px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <span className="font-bold">{place.flag}</span> {place.country}
                   </div>
-                  <p className="text-primary font-bold">From ₹{place.price.toLocaleString()}</p>
                 </div>
-                <Button 
-                  label="Explore" 
-                  variant="primary" 
-                  size="sm" 
-                  fullWidth 
-                  className="mt-4"
-                  onClick={() => navigate(`/destination-suggest?place=${place.name}`)}
-                />
-              </div>
-            </Card>
-          ))}
-        </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg">{place.name}</h3>
+                  <div className="flex justify-between items-center mt-2">
+                    <div>
+                      <div className="flex items-center text-sm text-neutral">
+                        <span className="text-yellow-500 flex">
+                          {[...Array(5)].map((_, i) => (
+                            <Icon 
+                              key={i} 
+                              icon={"star" as const}
+                              className={`text-yellow-500 ${i < Math.floor(place.rating) ? 'opacity-100' : i < place.rating ? 'opacity-50' : 'opacity-20'}`}
+                            />
+                          ))}
+                        </span>
+                        <span className="ml-1">{place.rating.toFixed(1)}</span>
+                        <span className="ml-2">({place.reviewCount.toLocaleString()} reviews)</span>
+                      </div>
+                    </div>
+                    <p className="text-primary font-bold">From ₹{place.price.toLocaleString()}</p>
+                  </div>
+                  <Button 
+                    label="Explore" 
+                    variant="primary" 
+                    size="sm" 
+                    fullWidth 
+                    className="mt-4"
+                    onClick={() => navigate(`/destination-suggest?place=${place.name}`)}
+                  />
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Categories */}

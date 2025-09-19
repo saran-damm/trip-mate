@@ -13,15 +13,22 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@dataconnect/generated": "file:src/dataconnect-generated",
     "@fortawesome/fontawesome-svg-core": "^7.0.1",
     "@fortawesome/free-brands-svg-icons": "^7.0.1",
     "@fortawesome/free-regular-svg-icons": "^7.0.1",
     "@fortawesome/free-solid-svg-icons": "^7.0.1",
     "@fortawesome/react-fontawesome": "^3.0.2",
+    "@google/generative-ai": "^0.24.1",
+    "@types/leaflet": "^1.9.20",
+    "firebase": "^12.3.0",
+    "firebase-tools": "^14.17.0",
     "gh-pages": "^6.3.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.9.1"
   },
   "devDependencies": {

@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import Icon from "../../components/common/IconProvider";
+import { useTrip } from "../../context/TripContext";
 
 export default function TripSetup() {
   const navigate = useNavigate();
+  const { updateTripPlan } = useTrip();
 
   // State for each preference
   const [budget, setBudget] = useState(50000);
@@ -14,6 +16,15 @@ export default function TripSetup() {
   const [travelers, setTravelers] = useState(1);
   const [dates, setDates] = useState({ start: "", end: "" });
 
+  const numberOfDays = useMemo(() => {
+    if (!dates.start || !dates.end) return 0;
+    const start = new Date(dates.start);
+    const end = new Date(dates.end);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1; // Inclusive of the start day
+  }, [dates]);
+
   const toggleTheme = (theme: string) => {
     setThemes((prev) =>
       prev.includes(theme) ? prev.filter((t) => t !== theme) : [...prev, theme]
@@ -21,7 +32,15 @@ export default function TripSetup() {
   };
 
   const handleSubmit = () => {
-    console.log({ budget, style, themes, travelers, dates });
+    updateTripPlan({
+      numberOfDays,
+      interests: themes,
+      budget: {
+        perDay: Math.round(budget / (numberOfDays || 1)),
+        total: budget,
+        currency: 'INR',
+      },
+    });
     navigate("/destination-suggest"); // go to next step
   };
 

@@ -1,52 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
-import { useNavigate } from "react-router-dom";
 import WeatherPanel from "../../components/common/WeatherPanel";
 import Icon from "../../components/common/IconProvider";
-
-type DayPlan = {
-  day: number;
-  activities: { icon: string; iconType: string; text: string }[];
-};
-
-const itinerary: DayPlan[] = [
-  {
-    day: 1,
-    activities: [
-      { icon: "landmark", iconType: "landmark", text: "Visit City Museum" },
-      { icon: "food", iconType: "utensils", text: "Lunch at Local Bistro" },
-      { icon: "map-marker", iconType: "map-marker", text: "Evening Walk in Old Town" },
-    ],
-  },
-  {
-    day: 2,
-    activities: [
-      { icon: "mountain", iconType: "mountain", text: "Sunrise Trek" },
-      { icon: "food", iconType: "utensils", text: "Street Food Tour" },
-      { icon: "music", iconType: "music", text: "Nightlife Experience" },
-    ],
-  },
-];
+import { useTrip } from "../../context/TripContext";
+import { useGenerateItinerary } from "../../hooks/useGenerateItinerary";
+import MapView from "../../components/maps/MapView";
 
 export default function Itinerary() {
-    const navigate = useNavigate();
-    const [activeDay, setActiveDay] = useState(0);
+  const navigate = useNavigate();
+  const { tripPlan } = useTrip();
+  const { generate, itinerary, isGenerating, error } = useGenerateItinerary();
+  const [activeDay, setActiveDay] = useState(0);
+
+  useEffect(() => {
+    // We only want to generate the itinerary once when the page loads.
+    // An empty dependency array ensures this effect runs only on mount.
+    generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (isGenerating) {
+    return (
+      <div className="min-h-screen bg-light flex flex-col items-center justify-center px-6 py-10">
+        <Icon icon="rocket" spin className="text-primary text-5xl mb-4" />
+        <h2 className="text-2xl font-semibold text-primary">Generating Your Itinerary...</h2>
+        <p className="text-neutral mt-2">Our AI is crafting the perfect trip for you. Please wait a moment.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-light flex flex-col items-center justify-center px-6 py-10">
+        <Icon icon="warning" className="text-red-500 text-5xl mb-4" />
+        <h2 className="text-2xl font-semibold text-red-500">Error Generating Itinerary</h2>
+        <p className="text-neutral mt-2">{error}</p>
+        <Button label="Try Again" onClick={generate} className="mt-4" />
+      </div>
+    );
+  }
+
+  if (!itinerary || itinerary.length === 0) {
+    return (
+      <div className="min-h-screen bg-light flex flex-col items-center justify-center px-6 py-10">
+        <h2 className="text-2xl font-semibold text-primary">No Itinerary Found</h2>
+        <p className="text-neutral mt-2">We couldn't find an itinerary for your trip. Please go back and try again.</p>
+        <Button label="Go Back" onClick={() => navigate('/trip-setup')} className="mt-4" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-light px-6 py-8">
       <h1 className="text-3xl font-bold text-primary mb-6">
-        Your Draft Itinerary <Icon icon="calendar" className="ml-2 text-primary" />
+        Your Draft Itinerary for {tripPlan?.destination} <Icon icon="calendar" className="ml-2 text-primary" />
       </h1>
 
       {/* Day Tabs */}
       <div className="flex justify-between mb-6">
-        <div className="flex gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-2">
           {itinerary.map((day, i) => (
             <button
               key={i}
               onClick={() => setActiveDay(i)}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg whitespace-nowrap ${
                 activeDay === i
                   ? "bg-primary text-white"
                   : "bg-light border text-neutral hover:bg-gray-100"
@@ -57,7 +76,6 @@ export default function Itinerary() {
           ))}
         </div>
         
-        {/* Edit Day button moved here */}
         <Button 
           label={<>
             <Icon icon="pencil" className="mr-1" /> Edit Day
@@ -69,25 +87,32 @@ export default function Itinerary() {
       </div>
 
       {/* Map Preview */}
-      <div className="h-64 bg-neutral text-white flex items-center justify-center rounded-card shadow-card mb-6">
-        <div className="flex flex-col items-center">
-          <Icon icon="map-marker" size="3x" className="mb-3" />
-          <span>Map Preview (integrate Mapbox/Google Maps later)</span>
-        </div>
+      <div className="h-96 rounded-card shadow-card mb-6 overflow-hidden">
+        {tripPlan?.centerCoordinates && (
+          <MapView 
+            center={[tripPlan.centerCoordinates.lat, tripPlan.centerCoordinates.lng]}
+            markers={itinerary[activeDay].activities
+              .filter(a => a.coordinates)
+              .map(a => ({ 
+                position: [a.coordinates!.lat, a.coordinates!.lng], 
+                popupText: a.description 
+              }))
+            }
+          />
+        )}
       </div>
 
       {/* Activities for the Day */}
       <Card>
         <h2 className="text-xl font-semibold mb-3">
-          Day {itinerary[activeDay].day} Plan
+          {itinerary[activeDay].title}
         </h2>
+        <p className="text-neutral mb-4">{itinerary[activeDay].description}</p>
         <ul className="space-y-3 text-neutral">
           {itinerary[activeDay].activities.map((a, idx) => (
-            <li key={idx} className="flex items-center gap-2 border-b pb-2 last:border-0">
-              <span className="text-lg w-6 flex justify-center">
-                <Icon icon={a.iconType as any} className="text-primary" />
-              </span>
-              {a.text}
+            <li key={idx} className="flex items-center gap-3 border-b pb-2 last:border-0">
+              <span className="font-semibold text-primary w-24">{a.time}</span>
+              <span>{a.description}</span>
             </li>
           ))}
         </ul>

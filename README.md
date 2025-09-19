@@ -1,69 +1,144 @@
-# React + TypeScript + Vite
+# Trip Planner App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern trip planning application built with React, TypeScript, and Firebase.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- User authentication (sign up, login, password reset)
+- Browse trending destinations
+- Plan and manage trips
+- Responsive design with Tailwind CSS
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19 with TypeScript
+- Vite for fast development and building
+- Firebase (Authentication, Firestore, Storage)
+- Tailwind CSS for styling
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Setup Instructions
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### Prerequisites
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js (v18 or higher)
+- npm or yarn
+- Firebase account
+
+### Firebase Setup
+
+1. Create a new Firebase project at [https://console.firebase.google.com/](https://console.firebase.google.com/)
+
+2. Enable the following Firebase services:
+   - Authentication (with Email/Password provider)
+   - Firestore Database
+   - Storage
+
+3. Get your Firebase configuration:
+   - Go to Project Settings > General
+   - Scroll down to "Your apps" section
+   - Select the web app or create a new one
+   - Copy the Firebase configuration object
+
+4. Create a `.env.local` file in the root directory with your Firebase configuration:
+
+```
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Installation
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Clone the repository
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/your-username/trip-planner.git
+cd trip-planner
+```
+
+2. Install dependencies
+
+```bash
+npm install
+# or
+yarn
+```
+
+3. Start the development server
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+4. Seed initial data (first time setup)
+
+```bash
+# This will be handled automatically on first run
+# You can manually trigger it by importing and calling seedInitialData() from src/firebase/seed.ts
+```
+
+### Building for Production
+
+```bash
+npm run build
+# or
+yarn build
+```
+
+### Firebase Rules Deployment
+
+If you encounter permissions errors, you need to deploy the Firebase security rules:
+
+```bash
+# Deploy Firestore rules
+firebase deploy --only firestore:rules
+
+# Deploy Storage rules
+firebase deploy --only storage
+
+# Or use the provided script
+./deploy-rules.sh
+```
+
+### Local Development with Firebase Emulators
+
+You can use Firebase emulators for local development:
+
+```bash
+# Start Firebase emulators
+./start-emulators.sh
+```
+
+### Deployment
+
+The app can be deployed to Firebase Hosting:
+
+1. Install Firebase CLI
+
+```bash
+npm install -g firebase-tools
+```
+
+2. Login to Firebase
+
+```bash
+firebase login
+```
+
+3. Initialize Firebase Hosting
+
+```bash
+firebase init hosting
+```
+
+4. Deploy to Firebase
+
+```bash
+firebase deploy
 ```

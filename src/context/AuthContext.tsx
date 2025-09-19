@@ -1,7 +1,10 @@
 import { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase/config';
+import { getCurrentUser } from '../firebase/auth';
 
-interface User {
+export interface User {
   user_id: string;
   email: string;
   name: string;
@@ -39,40 +42,49 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Check for existing token on initial load
+  // Listen for Firebase auth state changes
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const storedToken = localStorage.getItem('auth_token');
-        
-        if (storedToken) {
-          // Here you would typically validate the token with your backend
-          // For now, we'll just set it and assume it's valid
-          setToken(storedToken);
-          setIsAuthenticated(true);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      
+      if (firebaseUser) {
+        // User is signed in
+        try {
+          // Get the ID token
+          const idToken = await firebaseUser.getIdToken();
           
-          // You could also fetch the user data here using the token
-          // const response = await fetch('/api/auth/validate-token', {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify({ token: storedToken }),
-          // });
-          // const data = await response.json();
-          // if (data.user) setUser(data.user);
+          // Store the token in localStorage
+          localStorage.setItem('auth_token', idToken);
+          
+          // Get user data from our helper function
+          const userData = getCurrentUser();
+          
+          if (userData) {
+            setUser(userData);
+            setToken(idToken);
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error('Error processing authenticated user:', error);
+          // Clear any invalid tokens
+          localStorage.removeItem('auth_token');
+          setToken(null);
+          setIsAuthenticated(false);
+          setUser(null);
         }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        // Clear any invalid tokens
+      } else {
+        // User is signed out
         localStorage.removeItem('auth_token');
         setToken(null);
         setIsAuthenticated(false);
         setUser(null);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    checkAuth();
+      
+      setLoading(false);
+    });
+    
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   return (

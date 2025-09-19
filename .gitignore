@@ -26,5 +26,4 @@ dist-ssr
 # Python virtual environment
 venv/
 
-# Sensitive files
-admin_secret.json
+
