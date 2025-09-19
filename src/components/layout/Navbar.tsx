@@ -1,7 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Icon from "../common/IconProvider";
+import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
   { name: "Home", path: "/home", icon: "home" as const },
@@ -11,9 +11,19 @@ const navItems = [
 
 export default function Navbar() {
   const location = useLocation();
-  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const { logout, isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login'); // Redirect to login page after logout
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   // Handle scroll effect
   useEffect(() => {
@@ -74,25 +84,30 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full bg-light hover:bg-light/80 transition-colors"
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === "light" ? <Icon icon={"moon" as const} /> : <Icon icon={"sun" as const} />}
-        </button>
+        {/* Logout Button */}
+        {isAuthenticated && (
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors flex items-center gap-1.5"
+            aria-label="Logout"
+          >
+            <Icon icon={"sign-out-alt" as const} />
+            <span>Logout</span>
+          </button>
+        )}
       </div>
 
       {/* Mobile Menu Button */}
       <div className="md:hidden flex items-center gap-4">
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full bg-light hover:bg-light/80 transition-colors"
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === "light" ? <Icon icon={"moon" as const} /> : <Icon icon={"sun" as const} />}
-        </button>
+        {isAuthenticated && (
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+            aria-label="Logout"
+          >
+            <Icon icon={"sign-out-alt" as const} />
+          </button>
+        )}
         
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

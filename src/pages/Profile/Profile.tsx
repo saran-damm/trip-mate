@@ -1,11 +1,28 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Icon from "../../components/common/IconProvider";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../components/common/Toast";
 
 export default function Profile() {
+  const { user, logout } = useAuth();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
   const [language, setLanguage] = useState("English");
   const [darkMode, setDarkMode] = useState(false);
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      showToast("Logged out successfully", "success");
+      navigate("/auth");
+    } catch (error) {
+      console.error("Logout error:", error);
+      showToast("Failed to logout. Please try again.", "error");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-light px-6 py-8">
@@ -16,14 +33,20 @@ export default function Profile() {
       {/* User Info */}
       <Card className="shadow-card mb-6">
         <div className="flex items-center gap-4">
-          <img
-            src="https://source.unsplash.com/100x100/?person,portrait"
-            alt="Avatar"
-            className="w-20 h-20 rounded-full object-cover"
-          />
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+            {user?.profile_image ? (
+              <img
+                src={user.profile_image}
+                alt={user.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Icon icon={"user" as const} size="2x" className="text-primary" />
+            )}
+          </div>
           <div>
-            <h2 className="text-xl font-semibold">Uday Kiran</h2>
-            <p className="text-neutral">uday@example.com</p>
+            <h2 className="text-xl font-semibold">{user?.name || 'User'}</h2>
+            <p className="text-neutral">{user?.email || 'user@example.com'}</p>
           </div>
         </div>
       </Card>
@@ -98,6 +121,17 @@ export default function Profile() {
           />
         </div>
       </Card>
+      
+      {/* Logout */}
+      <div className="mt-8 flex justify-center">
+        <Button
+          label="Logout"
+          variant="outline"
+          onClick={handleLogout}
+          className="text-red-500 hover:bg-red-50 border-red-300"
+          icon={<span className="mr-2">→</span>}
+        />
+      </div>
     </div>
   );
 }

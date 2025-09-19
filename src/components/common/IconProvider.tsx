@@ -6,7 +6,7 @@ import {
   faHotel, faMapMarkerAlt, faBus, faPencilAlt, faCalendarAlt, faHome, faUser, faMoon, faBars, faTimes,
   faCheck, faExclamationTriangle, faInfoCircle, faStar, faRocket, faCreditCard,
   faCloudSun, faSnowflake, faWind, faCloudMoon, faCamera, faEnvelope, faMagic,
-  faMap, faShare, faLink, faFilePdf,
+  faMap, faShare, faLink, faFilePdf, faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
 
 type IconType = 
@@ -17,7 +17,7 @@ type IconType =
   | 'moon' | 'bars' | 'times'
   | 'check' | 'warning' | 'info' | 'star' | 'rocket' | 'credit-card'
   | 'cloud-sun' | 'snow' | 'wind' | 'cloud-moon' | 'camera' | 'envelope'
-  | 'magic' | 'map' | 'share' | 'link' | 'file-pdf';
+  | 'magic' | 'map' | 'share' | 'link' | 'file-pdf' | 'sign-out-alt';
 
 type IconProps = {
   icon: IconType;
@@ -72,6 +72,7 @@ const iconMap = {
   'share': faShare,
   'link': faLink,
   'file-pdf': faFilePdf,
+  'sign-out-alt': faSignOutAlt,
 };
 
 export default function Icon({ icon, className = '', size, color, spin = false }: IconProps) {

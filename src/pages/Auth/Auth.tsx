@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../components/common/Toast";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import Icon from "../../components/common/IconProvider";
@@ -7,6 +9,13 @@ import Icon from "../../components/common/IconProvider";
 export default function Auth() {
   const [step, setStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const { login, isAuthenticated } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   
   // Start animation when component mounts
@@ -18,6 +27,13 @@ export default function Auth() {
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleContinue = () => {
     if (step < 1) {
@@ -29,12 +45,39 @@ export default function Auth() {
         setStep(step + 1);
         setIsAnimating(true);
       }, 300);
-    } else {
-      // Animate out before navigation
-      setIsAnimating(false);
-      setTimeout(() => {
-        navigate("/home");
-      }, 300);
+    }
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email || !formData.password) {
+      showToast("Please enter both email and password", "error");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      await login({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      // Success - animation and navigation will be handled by the isAuthenticated effect
+      showToast("Login successful!", "success");
+    } catch (error) {
+      console.error("Login failed:", error);
+      showToast(error instanceof Error ? error.message : "Login failed. Please try again.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,6 +143,9 @@ export default function Auth() {
                 <label className="text-sm text-neutral/70 mb-1 block">Email</label>
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
                   placeholder="your.email@example.com"
                   className="w-full px-4 py-3 border-2 border-primary/20 focus:border-primary/50 rounded-xl bg-white/50 outline-none transition-all"
                 />
@@ -109,27 +155,31 @@ export default function Auth() {
                 <label className="text-sm text-neutral/70 mb-1 block">Password</label>
                 <input
                   type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
                   placeholder="••••••••"
                   className="w-full px-4 py-3 border-2 border-primary/20 focus:border-primary/50 rounded-xl bg-white/50 outline-none transition-all"
                 />
                 <div className="text-xs text-right mt-1">
-                  <a href="#" className="text-primary hover:underline">Forgot password?</a>
+                  <Link to="/reset-password" className="text-primary hover:underline">Forgot password?</Link>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <Button 
-                label="Login" 
-                onClick={handleContinue} 
+                label={loading ? "Logging in..." : "Login"}
+                type="submit"
                 variant="primary"
                 fullWidth
                 size="lg"
+                disabled={loading}
               />
               <div className="text-center text-sm text-neutral mt-4">
                 Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign Up</Link>
               </div>
-            </div>
+            </form>
           </Card>
         )}
       </div>

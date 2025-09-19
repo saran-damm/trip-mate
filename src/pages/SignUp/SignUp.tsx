@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../components/common/Toast";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import Icon from "../../components/common/IconProvider";
@@ -7,6 +9,9 @@ import Icon from "../../components/common/IconProvider";
 export default function SignUp() {
   const navigate = useNavigate();
   const [isAnimating, setIsAnimating] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const { register, isAuthenticated } = useAuth();
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -32,6 +37,13 @@ export default function SignUp() {
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -119,18 +131,37 @@ export default function SignUp() {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Animate out before navigation
-      setIsAnimating(false);
-      setTimeout(() => {
-        // In a real app, you would send the data to your backend here
-        console.log("Form submitted:", formData);
-        // Navigate to home after successful signup
-        navigate("/home");
-      }, 300);
+      try {
+        setLoading(true);
+        
+        // Get the selected image file
+        const imageFile = fileInputRef.current?.files?.[0];
+        
+        if (!imageFile) {
+          showToast("Please select a profile image", "error");
+          return;
+        }
+        
+        // Register the user
+        await register({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          profile_image: imageFile
+        });
+        
+        showToast("Account created successfully!", "success");
+        // The redirect will be handled by the isAuthenticated effect
+      } catch (error) {
+        console.error("Registration error:", error);
+        showToast(error instanceof Error ? error.message : "Registration failed. Please try again.", "error");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -276,11 +307,12 @@ export default function SignUp() {
 
             <div className="pt-4">
               <Button 
-                label="Create Account" 
+                label={loading ? "Creating Account..." : "Create Account"}
                 variant="primary"
                 fullWidth
                 size="lg"
                 type="submit"
+                disabled={loading}
               />
             </div>
             
